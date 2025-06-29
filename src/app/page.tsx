@@ -25,7 +25,7 @@ export default function HomePage() {
     setShortUrl('');
 
     try {
-      const apiUrl = process.env.APP_BASE_URL || 'http://localhost:8080';
+      const apiUrl = process.env.NEXT_PUBLIC_APP_BASE_URL || 'http://localhost:8080';
       const response = await fetch(`${apiUrl}/api/v1/urls`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
