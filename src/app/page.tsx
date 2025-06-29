@@ -6,6 +6,7 @@ import ResultDisplay from '../components/ResultDisplay';
 import Footer from '../components/Footer';
 import Threads from '../components/Threads';
 import Header from '../components/Header';
+import Content from '../components/Content';
 
 import { Button } from '@/components/ui/button'; // ✅ Adjust this if needed
 import { Github } from 'lucide-react';
@@ -126,6 +127,12 @@ export default function HomePage() {
               <Header />
             </div>
           </div>
+        </div>
+      </section>
+
+      <section>
+        <div>
+          <Content />
         </div>
       </section>
 
