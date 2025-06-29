@@ -3,12 +3,12 @@
 import { useState } from 'react';
 import UrlForm from '../components/UrlForm';
 import ResultDisplay from '../components/ResultDisplay';
-import Footer from '../components/Footer';
+import Footer from '../components/Footer'; // This is the "Made by tshrrx" component
 import Threads from '../components/Threads';
 import Header from '../components/Header';
 import Content from '../components/Content';
 
-import { Button } from '@/components/ui/button'; // ✅ Adjust this if needed
+import { Button } from '@/components/ui/button';
 import { Github } from 'lucide-react';
 
 export default function HomePage() {
@@ -17,15 +17,12 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
-  const [socialPost, setSocialPost] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
     setError('');
     setShortUrl('');
-    setSocialPost('');
 
     try {
       const response = await fetch('http://localhost:8080/api/v1/urls', {
@@ -53,45 +50,6 @@ export default function HomePage() {
       navigator.clipboard.writeText(shortUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  const handleGeneratePost = async () => {
-    if (!longUrl) return;
-    setIsGenerating(true);
-    setSocialPost('');
-
-    const prompt = `Based on the following URL, act as an expert social media marketer and write a short, engaging tweet to share it. Include the placeholder "{shortUrl}" where the link should go. Do not include the original URL. URL: ${longUrl}`;
-
-    try {
-      const payload = {
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      };
-      const apiKey = ''; // Set your Gemini API key here
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate post from Gemini API.');
-      }
-
-      const result = await response.json();
-      if (result.candidates && result.candidates[0]?.content?.parts[0]?.text) {
-        let text = result.candidates[0].content.parts[0].text;
-        text = text.replace('{shortUrl}', shortUrl);
-        setSocialPost(text);
-      } else {
-        throw new Error('Unexpected response format from Gemini API.');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
-    } finally {
-      setIsGenerating(false);
     }
   };
 
@@ -129,16 +87,18 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
+      <section className="w-full flex justify-center mt-2 z-10">
+        <Footer />
+      </section>
       <section>
         <div>
           <Content />
         </div>
       </section>
 
-      {/* 🔗 Form + Results */}
+      {/* 🔗 Form + Results Section */}
       <section className="w-full max-w-2xl mx-auto p-4 z-10">
-        <div className="bg-black/60 backdrop-blur-md border border-slate-700/50 rounded-lg shadow-2xl p-6 md:p-8">
+        <div className="bg-black/60 backdrop-blur-md rounded-lg shadow-2xl p-6 md:p-8">
           <UrlForm
             longUrl={longUrl}
             setLongUrl={setLongUrl}
@@ -149,23 +109,6 @@ export default function HomePage() {
           {shortUrl && (
             <div className="mt-6 space-y-4 animate-fade-in">
               <ResultDisplay shortUrl={shortUrl} handleCopy={handleCopy} copied={copied} />
-              <button
-                onClick={handleGeneratePost}
-                disabled={isGenerating}
-                className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white font-bold py-3 px-4 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-black transition-colors duration-200 disabled:bg-purple-400/50 disabled:cursor-not-allowed"
-              >
-                ✨ {isGenerating ? 'Generating...' : 'Generate Social Post'}
-              </button>
-            </div>
-          )}
-
-          {socialPost && (
-            <div className="mt-4 animate-fade-in">
-              <textarea
-                readOnly
-                value={socialPost}
-                className="w-full p-3 text-base bg-slate-800/70 border border-slate-700 rounded-md text-white placeholder:text-slate-500 h-32 resize-none"
-              />
             </div>
           )}
 
@@ -175,8 +118,6 @@ export default function HomePage() {
             </div>
           )}
         </div>
-
-        <Footer />
       </section>
     </main>
   );

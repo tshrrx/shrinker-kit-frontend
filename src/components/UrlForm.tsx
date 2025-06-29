@@ -1,5 +1,8 @@
-// src/components/UrlForm.tsx
+'use client';
+
 import { Link as LinkIcon } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 interface UrlFormProps {
   longUrl: string;
@@ -9,27 +12,31 @@ interface UrlFormProps {
 }
 
 const UrlForm = ({ longUrl, setLongUrl, handleSubmit, isLoading }: UrlFormProps) => (
-  <form onSubmit={handleSubmit}>
-    <label htmlFor="longUrl" className="sr-only">Enter your long URL</label>
-    <div className="relative">
-      <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-      <input
+  <form onSubmit={handleSubmit} className="flex flex-col gap-4 items-stretch">
+    <div className="relative w-full">
+      <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" />
+      <Input
         id="longUrl"
         type="url"
         value={longUrl}
         onChange={(e) => setLongUrl(e.target.value)}
-        placeholder="https://your-super-long-url.com/goes-here"
-        className="w-full pl-12 pr-4 py-3 text-lg bg-slate-800/50 border border-slate-700 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-pink-500 text-white transition-shadow duration-200 placeholder:text-slate-500"
+        placeholder="Your long URL goes here..."
         required
+        className="pl-12 py-6 text-base bg-black/60 text-slate-200 border border-slate-700 placeholder:text-slate-500"
       />
     </div>
-    <button
-      type="submit"
-      disabled={isLoading}
-      className="mt-4 w-full bg-red-600 text-white font-bold py-3 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-black transition-colors duration-200 disabled:bg-red-400/50 disabled:cursor-not-allowed"
-    >
-      {isLoading ? 'Shortening...' : 'Shorten URL'}
-    </button>
+
+    <div className="flex justify-center">
+      <Button
+        type="submit"
+        disabled={isLoading}
+        variant="ghost"
+        className="border border-slate-700 text-white px-6 py-2 text-base font-medium hover:bg-white/10 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isLoading ? 'Shortening...' : 'Shorten URL'}
+      </Button>
+    </div>
   </form>
 );
+
 export default UrlForm;
