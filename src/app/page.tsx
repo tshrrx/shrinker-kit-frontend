@@ -1,103 +1,176 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState } from 'react';
+import UrlForm from '../components/UrlForm';
+import ResultDisplay from '../components/ResultDisplay';
+import Footer from '../components/Footer';
+import Threads from '../components/Threads';
+import Header from '../components/Header';
+
+import { Button } from '@/components/ui/button'; // ✅ Adjust this if needed
+import { Github } from 'lucide-react';
+
+export default function HomePage() {
+  const [longUrl, setLongUrl] = useState('');
+  const [shortUrl, setShortUrl] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [socialPost, setSocialPost] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsLoading(true);
+    setError('');
+    setShortUrl('');
+    setSocialPost('');
+
+    try {
+      const response = await fetch('http://localhost:8080/api/v1/urls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ longUrl }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to shorten URL');
+      }
+
+      const data = await response.json();
+      setShortUrl(data.shortUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCopy = () => {
+    if (shortUrl) {
+      navigator.clipboard.writeText(shortUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleGeneratePost = async () => {
+    if (!longUrl) return;
+    setIsGenerating(true);
+    setSocialPost('');
+
+    const prompt = `Based on the following URL, act as an expert social media marketer and write a short, engaging tweet to share it. Include the placeholder "{shortUrl}" where the link should go. Do not include the original URL. URL: ${longUrl}`;
+
+    try {
+      const payload = {
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      };
+      const apiKey = ''; // Set your Gemini API key here
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate post from Gemini API.');
+      }
+
+      const result = await response.json();
+      if (result.candidates && result.candidates[0]?.content?.parts[0]?.text) {
+        let text = result.candidates[0].content.parts[0].text;
+        text = text.replace('{shortUrl}', shortUrl);
+        setSocialPost(text);
+      } else {
+        throw new Error('Unexpected response format from Gemini API.');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <main className="relative min-h-screen bg-black text-white overflow-x-hidden scrollbar-hidden">
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      {/* GitHub Button */}
+      <div className="absolute top-10 right-8 z-50">
+        <a
+          href="https://github.com/your-username/your-repo"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button variant="ghost" className="text-white hover:text-gray-300 px-4 py-2 text-base flex items-center gap-2">
+            <Github className="w-5 h-5" />
+            GitHub
+          </Button>
+        </a>
+      </div>
+
+      {/* 🧠 Header with Threads Background */}
+      <section className="topside">
+        <div style={{ width: '100%', height: '600px', position: 'relative' }}>
+          <Threads amplitude={2.5} distance={0} enableMouseInteraction={true} />
+          <div
+            className="absolute inset-0 z-10 flex items-center justify-center bg-transparent"
+            style={{ pointerEvents: 'none' }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <div
+              className="w-full max-w-2xl px-4"
+              style={{ pointerEvents: 'auto' }}
+            >
+              <Header />
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      </section>
+
+      {/* 🔗 Form + Results */}
+      <section className="w-full max-w-2xl mx-auto p-4 z-10">
+        <div className="bg-black/60 backdrop-blur-md border border-slate-700/50 rounded-lg shadow-2xl p-6 md:p-8">
+          <UrlForm
+            longUrl={longUrl}
+            setLongUrl={setLongUrl}
+            handleSubmit={handleSubmit}
+            isLoading={isLoading}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+          {shortUrl && (
+            <div className="mt-6 space-y-4 animate-fade-in">
+              <ResultDisplay shortUrl={shortUrl} handleCopy={handleCopy} copied={copied} />
+              <button
+                onClick={handleGeneratePost}
+                disabled={isGenerating}
+                className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white font-bold py-3 px-4 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-black transition-colors duration-200 disabled:bg-purple-400/50 disabled:cursor-not-allowed"
+              >
+                ✨ {isGenerating ? 'Generating...' : 'Generate Social Post'}
+              </button>
+            </div>
+          )}
+
+          {socialPost && (
+            <div className="mt-4 animate-fade-in">
+              <textarea
+                readOnly
+                value={socialPost}
+                className="w-full p-3 text-base bg-slate-800/70 border border-slate-700 rounded-md text-white placeholder:text-slate-500 h-32 resize-none"
+              />
+            </div>
+          )}
+
+          {error && (
+            <div className="mt-4 text-center p-2 text-red-400 bg-red-900/30 border border-red-800 rounded-md">
+              {error}
+            </div>
+          )}
+        </div>
+
+        <Footer />
+      </section>
+    </main>
   );
 }
