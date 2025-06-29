@@ -60,7 +60,7 @@ export default function HomePage() {
       {/* GitHub Button */}
       <div className="absolute top-10 right-8 z-50">
         <a
-          href="https://github.com/your-username/your-repo"
+          href="https://github.com/tshrrx/shrinker-kit-frontend"
           target="_blank"
           rel="noopener noreferrer"
         >
